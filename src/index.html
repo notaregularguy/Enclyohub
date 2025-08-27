@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enclyohub</title>
+<style>
+body{font-family:sans-serif;margin:20px}
+input,textarea,button{margin:5px 0;padding:8px;width:100%;box-sizing:border-box}
+button{width:auto;cursor:pointer;background:#4CAF50;color:white;border:none;padding:10px}
+h1,h2,h3{margin:10px 0}
+#pagesList div{border:1px solid #ccc;padding:10px;margin:5px 0}
+#pagesList div:hover{background:#f0f0f0}
+textarea{resize:vertical}
+</style>
+</head>
+<body>
+<h1>Enclyohub Wiki Generator</h1>
+<input type="text" id="communityName" placeholder="Community Name">
+<input type="text" id="communityGenre" placeholder="Genre">
+<textarea id="communityDescription" placeholder="Community Description"></textarea>
+<button id="saveCommunity">Save Community</button>
+<h2>Wiki Pages</h2>
+<input type="text" id="pageTitle" placeholder="Page Title">
+<textarea id="pageContent" placeholder="Page Content"></textarea>
+<button id="addPage">Add/Update Page</button>
+<div id="pagesList"></div>
+<button id="downloadBtn">Download pages.html</button>
+<script>
+let community={name:'',genre:'',description:''};
+let pages=JSON.parse(localStorage.getItem('wikiPages')||'{}');
+let storedCommunity=JSON.parse(localStorage.getItem('community')||'{}');
+if(storedCommunity.name){
+community=storedCommunity;
+document.getElementById('communityName').value=community.name;
+document.getElementById('communityGenre').value=community.genre;
+document.getElementById('communityDescription').value=community.description
+}
+function renderPages(){
+let list='';
+for(let key in pages){
+list+='<div><strong>'+key+'</strong><p>'+pages[key]+'</p><button onclick="editPage(\''+key+'\')">Edit</button> <button onclick="deletePage(\''+key+'\')">Delete</button></div>'
+}
+document.getElementById('pagesList').innerHTML=list
+}
+function editPage(title){
+document.getElementById('pageTitle').value=title;
+document.getElementById('pageContent').value=pages[title]
+}
+function deletePage(title){
+delete pages[title];
+localStorage.setItem('wikiPages',JSON.stringify(pages));
+renderPages()
+}
+document.getElementById('saveCommunity').onclick=function(){
+community.name=document.getElementById('communityName').value.trim();
+community.genre=document.getElementById('communityGenre').value.trim();
+community.description=document.getElementById('communityDescription').value.trim();
+localStorage.setItem('community',JSON.stringify(community));
+alert('Community saved')
+};
+document.getElementById('addPage').onclick=function(){
+let title=document.getElementById('pageTitle').value.trim();
+let content=document.getElementById('pageContent').value.trim();
+if(!title){alert('Title required');return}
+pages[title]=content;
+localStorage.setItem('wikiPages',JSON.stringify(pages));
+renderPages();
+document.getElementById('pageTitle').value='';
+document.getElementById('pageContent').value=''
+};
+document.getElementById('downloadBtn').onclick=function(){
+let content='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>'+community.name+'</title><style>body{font-family:sans-serif;margin:20px}h1,h2{margin:10px 0}button{padding:8px;margin:5px;background:#4CAF50;color:white;border:none;cursor:pointer}div.page{border:1px solid #ccc;padding:10px;margin:5px 0}</style></head><body><h1>'+community.name+'</h1><h3>Genre: '+community.genre+'</h3><p>'+community.description+'</p><h2>Wiki Pages</h2><div id="pagesContainer"></div><button id="generateCommunityBtn">Generate '+community.name+'.html</button><script>let pages='+JSON.stringify(pages)+';let container=document.getElementById("pagesContainer");for(let key in pages){let div=document.createElement("div");div.className="page";div.innerHTML="<h3>"+key+"</h3><p>"+pages[key]+"</p>";container.appendChild(div)}document.getElementById("generateCommunityBtn").onclick=function(){let blob=new Blob([document.documentElement.outerHTML],{type:"text/html"});let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="'+community.name+'.html";a.click()};<\/script></body></html>';
+let blob=new Blob([content],{type:'text/html'});
+let a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='pages.html';
+a.click()
+};
+renderPages();
+</script>
+</body>
+  </html>
